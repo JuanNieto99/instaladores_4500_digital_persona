@@ -2,6 +2,52 @@
    
    CALL :main
 
+<<<<<<< HEAD
+=======
+    :check_admin
+        net session >nul 2>&1
+        set adminStatus=%errorlevel%
+        
+        exit /B
+
+    :enable_admin
+        set /p answer=Para continuar debe Habilitar permisos de administrador ¿Desea continuar? (y/n): 
+        
+        if /i "%answer%"=="y" (
+            NET FILE 1>NUL 2>NUL || (
+                powershell -Command "Start-Process -Verb RunAs -FilePath '%~dpnx0' -ArgumentList 'am_admin'"
+                exit
+            )
+        ) else if /i "%answer%"=="n" (
+                echo No se han asignados privilegios de administrador.
+                echo El terminal se cerrará en 5 segundos. Pulse cualquier tecla para cerrarlo inmediatamente.
+                timeout /nobreak /t 5 >nul
+                choice /n /c Y /t 0 /d Y >nul
+            exit
+        ) 
+
+        exit /b
+
+    :install_wsl_update
+    
+        echo Instalando Windows Subsystem for Linux (WSL)...
+        echo ---------------------------------------------
+ 
+        echo Descargando wsl_update_x64.msi...
+        curl -o wsl_update_x64.msi https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi
+        echo Instalando wsl_update_x64.msi...
+        msiexec /i wsl_update_x64.msi 
+ 
+        winget install --interactive --exact dorssel.usbipd-wi
+
+        :: Habilita WSL 2
+        wsl --set-default-version 2 
+       
+        echo ---------------------------------------------
+        :: validar si wsl_update_x64 esta instalado
+    EXIT /B
+
+>>>>>>> 6132cbc01fc34af3ec489deb6f38b4a67a962c84
     :startup_files
 
         echo  Copiando archivos de inicio...
@@ -89,10 +135,26 @@
         pause
     EXIT /B
 
+<<<<<<< HEAD
  :main
        
+=======
+
+    :start_process
+        CALL :install_wsl_update
+>>>>>>> 6132cbc01fc34af3ec489deb6f38b4a67a962c84
         CALL :startup_files
         CALL :install_sdk
         CALL :install_dorssel
         CALL :create_task_manger 
+        exit /b
+
+
+    :main
+        
+        title Fingerprint installer - Windows
+
+        call :check_admin adminStatus
+    
+        if "%adminStatus%"=="0" (call:start_process) else (call:enable_admin)    
  exit /b
