@@ -59,7 +59,8 @@ exit /b
 
 :enable_windows_features
     set features=VirtualMachinePlatform Microsoft-Windows-Subsystem-Linux "Microsoft-Hyper-V-All"
-
+    echo "Responda Y"
+    powershell Set-ExecutionPolicy RemoteSigned
     for %%f in (%features%) do call :is_windows_featureEnabled %%f
 
     exit /b
