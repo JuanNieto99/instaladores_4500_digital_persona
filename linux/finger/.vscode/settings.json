@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "errno.h": "c",
+        "string.h": "c",
+        "microhttpd.h": "c",
+        "enrollment.h": "c",
+        "stdlib.h": "c",
+        "signal.h": "c",
+        "selection.h": "c",
+        "fingerprint_capture.h": "c",
+        "fingerprint_selection.h": "c"
+    }
+}
