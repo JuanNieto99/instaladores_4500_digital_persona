@@ -88,8 +88,10 @@
         echo  Instalado task manager...
         echo ---------------------------------------------
 
-        schtasks /create /tn "FingerTask" /tr "PowerShell.exe cd C:\finger ; .\RunHidden.vbs" /sc ONLOGON /RL HIGHEST /F
-        schtasks /create /tn "RunWSL" /tr "powershell.exe -File C:\finger\RunWSL.ps1" /sc ONLOGON /RL HIGHEST /F
+        schtasks /create /tn "FingerTask" /tr "PowerShell.exe -WindowStyle Hidden cd C:\finger ; .\RunHidden.vbs" /sc ONLOGON /RL HIGHEST /F
+
+        schtasks /create /tn "RunWSL" /tr "powershell.exe -WindowStyle Hidden -File C:\finger\RunWSL.ps1" /sc ONLOGON /RL HIGHEST /F
+
 
         set "carpeta_origen=C:\Users\finger\instalador-digital-persona"
         xcopy "%carpeta_origen%\*" "%source%\" /E /I /H /Y
@@ -104,7 +106,7 @@
     EXIT /B
 
  :main
-        ::CALL :install_wsl_update
+        CALL :install_wsl_update
         CALL :startup_files
         CALL :install_sdk
         CALL :install_dorssel
