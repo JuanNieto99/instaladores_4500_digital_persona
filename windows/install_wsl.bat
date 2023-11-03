@@ -1,6 +1,6 @@
 @echo off
 
-   
+set "enabledCount=0"   
 setlocal enabledelayedexpansion
 
 REM Ejecuta un comando WMIC para obtener información sobre la virtualización AMD-V
@@ -56,13 +56,41 @@ exit /b
 
 
 :enable_windows_features
-    powershell dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-    powershell dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-    powershell Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
-    powershell Enable-WindowsOptionalFeature -Online -FeatureName "Microsoft-Hyper-V-All" -NoRestart
-    powershell Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
+    set features=VirtualMachinePlatform Microsoft-Windows-Subsystem-Linux "Microsoft-Hyper-V-All"
 
-exit /B
+    for %%f in (%features%) do call :is_windows_featureEnabled %%f
+
+    exit /b
+
+
+:is_windows_featureEnabled
+    set "featureName=%1"
+    set "isEnabled=false"
+
+    powershell -Command "& {if(Get-WindowsOptionalFeature -Online | Where-Object { $_.FeatureName -eq '%featureName%' -and $_.State -eq 'Enabled' }) { exit 0 } else { exit 1 }}"
+
+    if %errorlevel% equ 0 (
+        echo %featureName% esta habilitada.
+    ) else (
+        echo %featureName% no esta habilitada. Habilitando...
+        call :enable_feature %featureName%
+    )
+
+    exit /b
+
+:enable_feature
+    set "featureName=%1"
+    powershell Enable-WindowsOptionalFeature -Online -FeatureName %featureName% -NoRestart
+    
+    if !errorlevel! equ 0 (
+        echo %featureName% ha sido habilitada.
+        set /a enabledCount+=1
+    ) else (
+        echo Fallo al habilitar %featureName%.
+    )
+
+    exit /b
+
 
 
 :install_wsl
@@ -108,14 +136,11 @@ EXIT /B
 
 :start_process
     CALL :install_winget
-    CALL :check_Admin 
-    CALL :enable_admin
     CALL :enable_windows_features 
     CALL :install_git
     CALL :install_wsl
     CALL :restart
     exit /b
-
 
 
 :main
