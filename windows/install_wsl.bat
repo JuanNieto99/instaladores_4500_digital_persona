@@ -1,6 +1,6 @@
 @echo off
 
-   
+set "enabledCount=0"   
 setlocal enabledelayedexpansion
 
 REM Ejecuta un comando WMIC para obtener información sobre la virtualización AMD-V
@@ -30,34 +30,67 @@ pause
 pause >nul
 exit /b
 
-:enable_admin
-    NET FILE 1>NUL 2>NUL || (
-        powershell -Command "Start-Process -Verb RunAs -FilePath '%~dpnx0' -ArgumentList 'am_admin'"
-
-        EXIT
-    )
-    EXIT /B
-
-
-EXIT /B
-
-
-:check_Admin
-    
+:check_admin
     net session >nul 2>&1
     set adminStatus=%errorlevel%
+    
+    exit /B
 
-EXIT /B
+:enable_admin
+    set /p answer=Para continuar debe Habilitar permisos de administrador ¿Desea continuar? (y/n): 
+    
+    if /i "%answer%"=="y" (
+        NET FILE 1>NUL 2>NUL || (
+            powershell -Command "Start-Process -Verb RunAs -FilePath '%~dpnx0' -ArgumentList 'am_admin'"
+            exit
+        )
+    ) else if /i "%answer%"=="n" (
+            echo No se han asignados privilegios de administrador.
+            echo El terminal se cerrará en 5 segundos. Pulse cualquier tecla para cerrarlo inmediatamente.
+            timeout /nobreak /t 5 >nul
+            choice /n /c Y /t 0 /d Y >nul
+        exit
+    ) 
+
+    exit /b
 
 
 :enable_windows_features
-    powershell dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-    powershell dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-    powershell Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart
-    powershell Enable-WindowsOptionalFeature -Online -FeatureName "Microsoft-Hyper-V-All" -NoRestart
-    powershell Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
+    set features=VirtualMachinePlatform Microsoft-Windows-Subsystem-Linux "Microsoft-Hyper-V-All"
 
-exit /B
+    for %%f in (%features%) do call :is_windows_featureEnabled %%f
+
+    exit /b
+
+
+:is_windows_featureEnabled
+    set "featureName=%1"
+    set "isEnabled=false"
+
+    powershell -Command "& {if(Get-WindowsOptionalFeature -Online | Where-Object { $_.FeatureName -eq '%featureName%' -and $_.State -eq 'Enabled' }) { exit 0 } else { exit 1 }}"
+
+    if %errorlevel% equ 0 (
+        echo %featureName% esta habilitada.
+    ) else (
+        echo %featureName% no esta habilitada. Habilitando...
+        call :enable_feature %featureName%
+    )
+
+    exit /b
+
+:enable_feature
+    set "featureName=%1"
+    powershell Enable-WindowsOptionalFeature -Online -FeatureName %featureName% -NoRestart
+    
+    if !errorlevel! equ 0 (
+        echo %featureName% ha sido habilitada.
+        set /a enabledCount+=1
+    ) else (
+        echo Fallo al habilitar %featureName%.
+    )
+
+    exit /b
+
 
 
 :install_wsl
@@ -100,12 +133,21 @@ EXIT /B
     : shutdown /r /t 0
 EXIT /B
 
+
+:start_process
+    CALL :install_winget
+    CALL :enable_windows_features 
+    CALL :install_git
+    CALL :install_wsl
+    CALL :restart
+    exit /b
+
+
 :main
-        CALL :install_winget
-        CALL :check_Admin 
-        CALL :enable_admin
-        CALL :enable_windows_features 
-        CALL :install_git
-        CALL :install_wsl
-        CALL :restart 
+    title Fingerprint installer - Windows
+
+    call :check_admin adminStatus
+    
+    if "%adminStatus%"=="0" (call:start_process) else (call:enable_admin)
+ 
 exit /b
