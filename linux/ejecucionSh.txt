@@ -1,3 +1,0 @@
-ejecuta estos dos comandos 
-bash tmux.sh
-sudo bash sdk.sh
