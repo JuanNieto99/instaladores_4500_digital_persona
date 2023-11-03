@@ -2,7 +2,8 @@
 
 set "enabledCount=0"   
 setlocal enabledelayedexpansion
-
+echo  virtualizacion...
+echo ---------------------------------------------
 REM Ejecuta un comando WMIC para obtener información sobre la virtualización AMD-V
 for /f "tokens=*" %%a in ('wmic cpu get VirtualizationFirmwareEnabled') do (
   set "line=%%a"
@@ -22,6 +23,7 @@ if %errorlevel%==0 (
 ) else (
     echo Virtualización no habilitada.
 )
+echo ---------------------------------------------
 
 CALL :main
 
@@ -94,12 +96,15 @@ exit /b
 
 
 :install_wsl
+    echo  instalado wsl...
+    echo ---------------------------------------------
 
     echo "Al finalzar la instalacion reinicia el computador"
     powershell "wsl --install -d Ubuntu-22.04 "
     powershell "wsl -s Ubuntu-22.04"
     powershell "wsl --update"
-    
+    echo ---------------------------------------------
+
 EXIT /B 
 
 :install_git
@@ -109,7 +114,11 @@ EXIT /B
         echo Git está instalado en tu sistema.
     ) else (
         echo Git no está instalado lo instalaremos.
+        echo  instalado git...
+        echo ---------------------------------------------
         winget install --id Git.Git -e --source winget
+        echo ---------------------------------------------
+
     )
    
 EXIT /B
@@ -121,8 +130,12 @@ EXIT /B
     if %errorlevel% == 0 (
         echo winget está instalado en este sistema.
     ) else (
+        echo  instalado winget...
+        echo ---------------------------------------------
         start "Microsoft Store" "ms-windows-store://pdp?ProductId=9NBLGGH4NNS1"  
         echo winget no está instalado en este sistema, se abrira la tienda para que se instale.
+        echo ---------------------------------------------
+
     )
  
 EXIT /B

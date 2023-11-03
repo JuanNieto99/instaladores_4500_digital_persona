@@ -11,6 +11,8 @@
         curl -o wsl_update_x64.msi https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi
         echo Instalando wsl_update_x64.msi...
         msiexec /i wsl_update_x64.msi 
+ 
+        winget install --interactive --exact dorssel.usbipd-wi
 
         :: Habilita WSL 2
         wsl --set-default-version 2 
@@ -32,8 +34,20 @@
         if not exist %source% mkdir %source%
     
         cd C:\Users\finger
+        set carpeta_a_eliminar=C:\Users\finger\instalador-digital-persona
 
-        powershell "git clone https://github.com/JuanNieto99/instalador-digital-persona"
+        if exist "%carpeta_a_eliminar%" (
+            echo La carpeta existe. Se eliminará.
+            rmdir /s /q "%carpeta_a_eliminar%"
+            echo Carpeta eliminada con éxito.
+                    
+            powershell "git clone https://github.com/JuanNieto99/instalador-digital-persona"
+
+        ) else (
+             powershell "git clone https://github.com/JuanNieto99/instalador-digital-persona"
+
+        )
+
 
         xcopy "%source%\instalador-digital-persona\finger.ps1" "%programFile%" /Y
         xcopy "%source%\instalador-digital-persona\RunHidden.vbs" "%programFile%" /Y
@@ -56,9 +70,16 @@
     EXIT /B
 
     :install_dorssel
-        echo  Instalado dorssel...
+        echo  Instalado USBIPD-WIN...
         echo ---------------------------------------------
-        powershell winget install --interactive --exact dorssel.usbipd-win  
+        usbipd wsl list
+        if errorlevel 1 (
+            echo El comando retornó un error.
+            powershell winget install --interactive --exact dorssel.usbipd-win  
+        ) else (
+            echo  USBIPD-WIN ya esta instalado 
+        )
+       
         echo ---------------------------------------------
  
     EXIT /B
@@ -83,7 +104,7 @@
     EXIT /B
 
  :main
-        CALL :install_wsl_update
+        ::CALL :install_wsl_update
         CALL :startup_files
         CALL :install_sdk
         CALL :install_dorssel
