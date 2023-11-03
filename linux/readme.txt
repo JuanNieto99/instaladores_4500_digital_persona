@@ -18,6 +18,7 @@ este comando instala las librerias necesarias para el correcto funcionamiento de
 -------- ingresar link documentacion --------
 
 
+el archivo instalacionsdk.txt explica mas a detalle el como funciona
 
 
 
