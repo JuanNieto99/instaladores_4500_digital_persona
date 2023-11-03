@@ -1,5 +1,4 @@
- instale
-
+instale
 https://apps.microsoft.com/detail/9NBLGGH4NNS1?rtc=1&hl=es-co&gl=CO#activetab=pivot:overviewtab
 
 ejecutar install_wsl instalar lo que pida instalar 
