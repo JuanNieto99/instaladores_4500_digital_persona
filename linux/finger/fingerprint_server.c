@@ -23,8 +23,140 @@ int request_handler(void *cls, struct MHD_Connection *connection,
  
     struct MHD_Response *response;
     
+    if (strcmp(url, "/isConnected") == 0) { 
+        // Inicialización del lector de huellas y variables
+      //  int result = dpfpdd_init();
+        DPFPDD_DEV hReader = NULL;
+        int dpi = 0;
+        int bStop = 0;
+        int result = dpfpdd_init();
+        char szReader[MAX_DEVICE_NAME_LENGTH];
+        sigset_t sigmask;
 
-    if (strcmp(url, "/") == 0) {
+        // Configuración de máscara de señales
+        sigfillset(&sigmask);
+        pthread_sigmask(SIG_BLOCK, &sigmask, NULL);
+        
+        // Configuración de localización
+        setlocale(LC_ALL, "");
+        strncpy(szReader, "", sizeof(szReader));
+
+        // Intento de obtener información sobre el lector de huellas
+        unsigned int nReaderCnt = 1;
+        while(!bStop) {
+            // Consulta de información de los dispositivos
+    
+            DPFPDD_DEV_INFO* pReaderInfo = (DPFPDD_DEV_INFO*)malloc(sizeof(DPFPDD_DEV_INFO) * nReaderCnt);
+            while(NULL != pReaderInfo) {
+                unsigned int i = 0;
+                for(i = 0; i < nReaderCnt; i++) {
+                    pReaderInfo[i].size = sizeof(DPFPDD_DEV_INFO);
+                }
+
+                unsigned int nNewReaderCnt = nReaderCnt;
+                int result2 = dpfpdd_query_devices(&nNewReaderCnt, pReaderInfo);
+
+                // Manejo de errores en la consulta de dispositivos
+                if(DPFPDD_SUCCESS != result2 && DPFPDD_E_MORE_DATA != result2) {
+
+                    response = MHD_create_response_from_buffer(strlen("{\"message\": \"Huellero no conectado\", \"type\": \"false\"} "),
+                                                            (void *) "{\"message\": \"Huellero no conectado\", \"type\": \"false\"} ",
+                                                            MHD_RESPMEM_MUST_COPY);
+                                MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+                                MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                                MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+
+                                    int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+                                    MHD_destroy_response(response);
+                                    return ret;
+                    printf("Error en dpfpdd_query_devices(): %d", result2);
+                    free(pReaderInfo);
+                    pReaderInfo = NULL;
+                    nReaderCnt = 0;
+                    break;
+                }
+
+                if(DPFPDD_E_MORE_DATA == result2) {
+                    DPFPDD_DEV_INFO* pri = (DPFPDD_DEV_INFO*)realloc(pReaderInfo, sizeof(DPFPDD_DEV_INFO) * nNewReaderCnt);
+                    if(NULL == pri) {
+                        printf("Error en realloc(): ENOMEM");
+                        break;
+                        response = MHD_create_response_from_buffer(strlen("{\"message\": \"Huellero no conectado\", \"type\": \"false\"} "),
+                                                            (void *) "{\"message\": \"Huellero no conectado\", \"type\": \"false\"} ",
+                                                            MHD_RESPMEM_MUST_COPY);
+                                    MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+                                    MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                                    MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+
+                                    int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+                                    MHD_destroy_response(response);
+                                    return ret;
+                    }
+                    pReaderInfo = pri;
+                    nReaderCnt = nNewReaderCnt;
+                    continue;
+                }
+
+                nReaderCnt = nNewReaderCnt;
+                break;
+            }
+
+            // Selección del lector y obtención de sus capacidades
+            int result2 = 0;
+            int nChoice = 0;
+    
+
+            // Si no se encuentra ningún lector de huellas
+            if(0 == nReaderCnt) {
+                response = MHD_create_response_from_buffer(strlen("{\"message\": \"Huellero no conectado\", \"type\": \"false\"} "),
+                                                            (void *) "{\"message\": \"Huellero no conectado\", \"type\": \"false\"} ",
+                                                            MHD_RESPMEM_MUST_COPY);
+                                MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+                                MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                                MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+                
+                if(NULL != hReader){
+                    result = dpfpdd_close(hReader);
+                    hReader = NULL;
+                } 
+                
+                int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+                MHD_destroy_response(response);
+                return ret;
+                dpfpdd_exit();  
+
+            } else {
+                // Selección y apertura del lector de huellas
+                hReader = SelectAndOpenReader(szReader, sizeof(szReader),&dpi);
+                                response = MHD_create_response_from_buffer(strlen("{\"message\": \"Huellero  conectado\", \"type\": \"true\"} "),
+                                                            (void *) "{\"message\": \"Huellero  conectado\", \"type\": \"true\"} ",
+                                                            MHD_RESPMEM_MUST_COPY);
+                                MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+                                MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                                MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+                
+                if(NULL != hReader){
+                    result = dpfpdd_close(hReader);
+                    hReader = NULL;
+                } 
+                
+                int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+                MHD_destroy_response(response);
+                return ret;
+                dpfpdd_exit();  
+
+            }
+
+        
+
+            if(NULL != pReaderInfo) free(pReaderInfo);
+            pReaderInfo = NULL;
+            nReaderCnt = 0;
+        }
+        
+    }
+
+    if (strcmp(url, "/Connect") == 0) {
     
         // Inicialización del lector de huellas y variables
       //  int result = dpfpdd_init();
@@ -86,9 +218,9 @@ int request_handler(void *cls, struct MHD_Connection *connection,
                         response = MHD_create_response_from_buffer(strlen("{\"message\": \"Huellero no conectado\", \"type\": \"false\"} "),
                                                             (void *) "{\"message\": \"Huellero no conectado\", \"type\": \"false\"} ",
                                                             MHD_RESPMEM_MUST_COPY);
-                                MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-                                MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-                                MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+                                    MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+                                    MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                                    MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
 
                                     int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
                                     MHD_destroy_response(response);
@@ -139,9 +271,54 @@ int request_handler(void *cls, struct MHD_Connection *connection,
                 int bStop = 0;
                 char* base64Data = CaptureFinger("any finger", hReader, dpi,DPFJ_FMD_ISO_19794_2_2005, &pFeatures1);
                 char* estado = "false";
-        
+
+                char* readerName = (char*)malloc( sizeof(szReader));
+                if (readerName != NULL) {
+                    strncpy(readerName, szReader,  sizeof(szReader));
+                }
+
+                unsigned int nReaderCnt = 1;
+                DPFPDD_DEV_INFO* pReaderInfo = (DPFPDD_DEV_INFO*)malloc(sizeof(DPFPDD_DEV_INFO) * nReaderCnt);
+                while(NULL != pReaderInfo) {
+                    unsigned int i = 0;
+                    for(i = 0; i < nReaderCnt; i++) {
+                        pReaderInfo[i].size = sizeof(DPFPDD_DEV_INFO);
+                    }
+
+                    unsigned int nNewReaderCnt = nReaderCnt;
+                    int result = dpfpdd_query_devices(&nNewReaderCnt, pReaderInfo);
+
+                    // Manejo de errores en la consulta de dispositivos
+                    if(DPFPDD_SUCCESS != result && DPFPDD_E_MORE_DATA != result) {
+                        printf("Error en dpfpdd_query_devices(): %d", result);
+                        free(pReaderInfo);
+                        pReaderInfo = NULL;
+                        nReaderCnt = 0;
+                        break;
+                    }
+
+                    if(DPFPDD_E_MORE_DATA == result) {
+                        DPFPDD_DEV_INFO* pri = (DPFPDD_DEV_INFO*)realloc(pReaderInfo, sizeof(DPFPDD_DEV_INFO) * nNewReaderCnt);
+                        if(NULL == pri) {
+                            printf("Error en realloc(): ENOMEM");
+                            break;
+                        }
+                        pReaderInfo = pri;
+                        nReaderCnt = nNewReaderCnt;
+                        continue;
+                    }
+
+                    nReaderCnt = nNewReaderCnt;
+                    break;
+                }
+
+                int result = 0;
+                int nChoice = 0;
+
+                char* divice_name =  pReaderInfo[nChoice].descr.serial_num; 
+
                 if(strlen(base64Data) > 30  ){
-                    estado = "true"; 
+                    estado = "true";  
 
                     const char* input_file_name = "fingerprint.bmp";
                             
@@ -152,15 +329,15 @@ int request_handler(void *cls, struct MHD_Connection *connection,
                     char* encoded_content = base64_encode(input_content, input_length, &encoded_length);
 
                     size_t legth = strlen(encoded_content);
-                    char buffer[legth];
+                    char buffer[legth+50];
 
-                    sprintf(buffer, "{\"message\": \"%s\", \"type\": \"%s\"}", encoded_content , estado);
+                    sprintf(buffer, "{\"message\": \"%s\", \"type\": \"%s\", \"serial_num_divice\": \"%s\"}", encoded_content , estado, divice_name);
                     response = MHD_create_response_from_buffer(strlen(buffer),
                                                     (void *)buffer,
                                                     MHD_RESPMEM_MUST_COPY);
                 } else {
                     char buffer[512]; 
-                    sprintf(buffer, "{\"message\": \"%s\", \"type\": \"%s\"}", base64Data , estado);
+                    sprintf(buffer, "{\"message\": \"%s\", \"type\": \"%s\", \"serial_num_divice\": \"%s\"}", base64Data , estado, divice_name);
                     response = MHD_create_response_from_buffer(strlen(buffer),
                                                     (void *)buffer,
                                                     MHD_RESPMEM_MUST_COPY);
@@ -186,7 +363,6 @@ int request_handler(void *cls, struct MHD_Connection *connection,
             if(NULL != pReaderInfo) free(pReaderInfo);
             pReaderInfo = NULL;
             nReaderCnt = 0;
- 
         }
         
     }
@@ -199,8 +375,7 @@ int main() {
     struct MHD_Daemon *daemon;
 
     // Inicia el demonio de MHD
-    daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL,
-                              &request_handler, NULL, MHD_OPTION_END);
+    daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL, &request_handler, NULL, MHD_OPTION_END);
 
     if (daemon == NULL) {
         printf("Error al iniciar el servidor\n");
