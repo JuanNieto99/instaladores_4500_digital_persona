@@ -1,4 +1,4 @@
-cd /opt/Crossmatch/urusdk-linux/Linux/finger
+cd /opt/Crossmatch/urusdk-linux/Linux/Samples/finger
 make
 ./finger 
 

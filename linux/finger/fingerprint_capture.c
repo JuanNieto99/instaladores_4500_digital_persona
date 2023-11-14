@@ -95,7 +95,7 @@ char* CaptureFinger(const char* szFingerName, DPFPDD_DEV hReader, int dpi, DPFJ_
                 mseconds = (tv2.tv_sec - tv1.tv_sec) * 1000 + (tv2.tv_usec - tv1.tv_usec) / 1000; // time of operation in milliseconds
 
                 if (DPFJ_SUCCESS == result) {                    
-                    saveBMP("fingerprint.bmp", pImage, cresult.info.width, cresult.info.height, 1500);
+                    saveBMP("fingerprint.bmp", pImage, cresult.info.width, cresult.info.height);
 
                     return "Fingerprint captured and features extracted";
                 } else {
@@ -111,8 +111,8 @@ char* CaptureFinger(const char* szFingerName, DPFPDD_DEV hReader, int dpi, DPFJ_
     }
 }
 
- // Función para guardar una imagen BMP
-void saveBMP(const char* filename, unsigned char* imageData, int width, int height, int dpi) {
+// Función para guardar una imagen BMP
+void saveBMP(const char* filename, unsigned char* imageData, int width, int height) {
     int leftOffset = -270;
     int newWidth = width - leftOffset;
    
@@ -132,9 +132,6 @@ void saveBMP(const char* filename, unsigned char* imageData, int width, int heig
     header.bits_per_pixel = 24;
     header.compression = 0;
     header.image_size = (newHalfWidth * 3 + ((4 - (newHalfWidth * 3) % 4) % 4)) * height;
- 
-    header.x_pixels_per_meter = dpi * 100 / 2.54; // Convert from DPI to dots per meter
-    header.y_pixels_per_meter = dpi * 100 / 2.54; // Convert from DPI to dots per meter
 
     FILE* outfile = fopen(filename, "wb");
     if (outfile == NULL) {
