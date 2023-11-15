@@ -96,3 +96,5 @@ DPFPDD_DEV SelectAndOpenReader(char* szReader, size_t nReaderLen, int *pDPI) {
 
     return hReader;
 }
+
+ 

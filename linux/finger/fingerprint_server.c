@@ -7,7 +7,15 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <locale.h>
+#include <pthread.h>
 #define PORT 5050
+#define CONNECTION_LIMIT 10  // Ajusta según tus necesidades
+
+struct ThreadData {
+    struct MHD_Connection *connection;
+    const char *url;
+    const char *method;
+};
 
 // Función para codificar en Base64
 char* base64_encode(const unsigned char* input, size_t length, size_t* output_length);
@@ -15,14 +23,15 @@ char* base64_encode(const unsigned char* input, size_t length, size_t* output_le
 // Función para leer el contenido de un archivo en un búfer
 unsigned char* read_file(const char* filename, size_t* length);
 
+
 // Función para manejar las solicitudes HTTP
 int request_handler(void *cls, struct MHD_Connection *connection,
                     const char *url, const char *method,
                     const char *version, const char *upload_data,
                     size_t *upload_data_size, void **con_cls) {
- 
+
     struct MHD_Response *response;
-    
+
     if (strcmp(url, "/isConnected") == 0) { 
         // Inicialización del lector de huellas y variables
       //  int result = dpfpdd_init();
@@ -145,10 +154,8 @@ int request_handler(void *cls, struct MHD_Connection *connection,
                 return ret;
                 dpfpdd_exit();  
 
-            }
-
-        
-
+            } 
+            
             if(NULL != pReaderInfo) free(pReaderInfo);
             pReaderInfo = NULL;
             nReaderCnt = 0;
@@ -159,7 +166,7 @@ int request_handler(void *cls, struct MHD_Connection *connection,
     if (strcmp(url, "/Connect") == 0) {
     
         // Inicialización del lector de huellas y variables
-      //  int result = dpfpdd_init();
+        //  int result = dpfpdd_init();
         DPFPDD_DEV hReader = NULL;
         int dpi = 0;
         int bStop = 0;
@@ -355,10 +362,9 @@ int request_handler(void *cls, struct MHD_Connection *connection,
 
                 int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
                 MHD_destroy_response(response);
+                
                 return ret;
-            }
-
-        
+            } 
 
             if(NULL != pReaderInfo) free(pReaderInfo);
             pReaderInfo = NULL;
@@ -375,8 +381,10 @@ int main() {
     struct MHD_Daemon *daemon;
 
     // Inicia el demonio de MHD
-    daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL, &request_handler, NULL, MHD_OPTION_END);
-
+    daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY | MHD_USE_DEBUG, PORT, NULL, NULL,
+                              &request_handler, NULL,
+                              MHD_OPTION_CONNECTION_LIMIT, 10,
+                              MHD_OPTION_END);
     if (daemon == NULL) {
         printf("Error al iniciar el servidor\n");
         return 1;

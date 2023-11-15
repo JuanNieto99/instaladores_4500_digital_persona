@@ -38,7 +38,7 @@ void signal_handler(int nSignal) {
 // Función para capturar la huella y extraer características
 char* CaptureFinger(const char* szFingerName, DPFPDD_DEV hReader, int dpi, DPFJ_FMD_FORMAT nFtType, unsigned char** ppFt){
     int result = 0;
-    int timeWait = 12000;
+    int timeWait = -1;  
     DPFPDD_CAPTURE_PARAM cparam = {0};
     cparam.size = sizeof(cparam);
     cparam.image_fmt = DPFPDD_IMG_FMT_ISOIEC19794;
@@ -51,12 +51,12 @@ char* CaptureFinger(const char* szFingerName, DPFPDD_DEV hReader, int dpi, DPFJ_
     unsigned int nOrigImageSize = 0;
     result = dpfpdd_capture(hReader, &cparam, 0, &cresult, &nOrigImageSize, NULL);
     if(DPFPDD_E_MORE_DATA != result){
-         return "time dpfpdd_capture"; 
+        return "time dpfpdd_capture"; 
     }
 
     unsigned char* pImage = (unsigned char*)malloc(nOrigImageSize);
     if(NULL == pImage){ 
-         return "error malloc"; 
+        return "error malloc"; 
     }
 
     g_hReader = hReader;
@@ -115,7 +115,6 @@ char* CaptureFinger(const char* szFingerName, DPFPDD_DEV hReader, int dpi, DPFJ_
 void saveBMP(const char* filename, unsigned char* imageData, int width, int height) {
     int leftOffset = -270;
     int newWidth = width - leftOffset;
-   
     // Calcular el ancho para recortar por la mitad verticalmente
     int newHalfWidth = newWidth / 1.90;
 
