@@ -30,6 +30,9 @@ DPFPDD_DEV g_hReader = NULL;
 
 // Función para manejar señales
 void signal_handler(int nSignal) {
+    
+    printf("apagando huellero .\n");
+
     if(SIGINT == nSignal){ 
         if(NULL != g_hReader) dpfpdd_cancel(g_hReader);
     }
@@ -50,6 +53,7 @@ char* CaptureFinger(const char* szFingerName, DPFPDD_DEV hReader, int dpi, DPFJ_
 
     unsigned int nOrigImageSize = 0;
     result = dpfpdd_capture(hReader, &cparam, 0, &cresult, &nOrigImageSize, NULL);
+   
     if(DPFPDD_E_MORE_DATA != result){
         return "time dpfpdd_capture"; 
     }
@@ -64,17 +68,22 @@ char* CaptureFinger(const char* szFingerName, DPFPDD_DEV hReader, int dpi, DPFJ_
     new_action.sa_handler = &signal_handler;
     sigemptyset(&new_action.sa_mask);
     new_action.sa_flags = 0;
+ 
+
     sigaction(SIGINT, &new_action, &old_action);
 
     sigset_t new_sigmask, old_sigmask;
     sigemptyset(&new_sigmask);
+
     sigaddset(&new_sigmask, SIGINT);
+
     pthread_sigmask(SIG_UNBLOCK, &new_sigmask, &old_sigmask);
 
     unsigned int nImageSize = nOrigImageSize;
+    signal(SIGINT, signal_handler);
 
-    printf("Put %s on the reader, or press Ctrl-C to cancel...\r\n", szFingerName);
     result = dpfpdd_capture(hReader, &cparam, timeWait, &cresult, &nImageSize, pImage);
+
     if (DPFPDD_SUCCESS != result) {
         return "Error capturing fingerprint";
     } else {
