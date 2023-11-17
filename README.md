@@ -4,6 +4,6 @@ instalador de un servicio tanto para linux como para windows con el fin de conec
 
 el servicio se ejecuta en el puerto
 
-127.0.0.1:5050/close -> cancelar lecturadel huellero
+127.0.0.1:5051/close -> cancelar lecturadel huellero
 127.0.0.1:5050/Connect-> conectar con el huellero
 127.0.0.1:5050/isConnected -> validar si el huellero esta conectado al computador
