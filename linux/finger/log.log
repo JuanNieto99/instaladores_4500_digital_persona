@@ -1,4 +1,0 @@
-mkdir -p .
-cc sample.o menu.o helpers.o selection.o verification.o identification.o enrollment.o -Wl,--no-as-needed -lpthread -lm -lc -ldl  -L /usr/lib -ldpfpdd -ldpfj -lmicrohttpd   -o ./UareUSample
-Servidor escuchando en http://127.0.0.1:5050/
-Presiona Enter para detener el servidor...
