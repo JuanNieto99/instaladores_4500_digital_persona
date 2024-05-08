@@ -40,6 +40,8 @@ function get_sdk(){
     cd "/$MAINPATH/$DIRECTORY_SDK"
 
     if [ -f "$FILE" ]; then 
+        sudo chmod -R 755 main.zip
+
         check_package "unzip"
         sudo unzip -o $
         sudo chmod -R 755 instalacion-sdk-digitalpersona

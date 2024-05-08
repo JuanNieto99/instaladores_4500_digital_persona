@@ -16,7 +16,7 @@ echo "Comando agregado a ~/.bashrc."
 
 sleep 2
 
-gnome-terminal
+#gnome-terminal
 
 sleep 2
 
