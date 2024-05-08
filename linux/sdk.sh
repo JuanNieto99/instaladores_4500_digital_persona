@@ -41,7 +41,8 @@ function get_sdk(){
 
     if [ -f "$FILE" ]; then 
         check_package "unzip"
-        sudo unzip -o $FILE
+        sudo unzip -o $
+        sudo chmod -R 755 instalacion-sdk-digitalpersona
         return 0
     else
         echo "$FILE not found"
@@ -65,6 +66,8 @@ function install_sdk(){
     echo "/usr/lib/Crossmatch/urusdk-linux/Linux/lib/java" | sudo tee -a /etc/ld.so.conf.d/libfingerprint.conf
     echo "/usr/lib/Crossmatch/urusdk-linux/Linux/lib/x64" | sudo tee -a /etc/ld.so.conf.d/libfingerprint.conf
     
+    sudo chmod -R 755 /opt/Crossmatch/
+
     sudo ldconfig
 
     check_package "libmicrohttpd-dev"

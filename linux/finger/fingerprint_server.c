@@ -31,6 +31,7 @@ int request_handler2(void *cls, struct MHD_Connection *connection,
                      const char *url, const char *method,
                      const char *version, const char *upload_data,
                      size_t *upload_data_size, void **con_cls) {
+    printf("iniciando servidor .\n");
 
     if (strcmp(url, "/close") == 0) {
         FILE* fp = popen("tmux send-keys -t finger_sesion C-c", "r");
